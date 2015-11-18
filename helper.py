@@ -52,8 +52,13 @@ def parallelize_sender(q):
 		flag = q.get()
 		if flag == None:
 			break
-		print "Send ", flag
-		submit(flag)
+		if flag is str:
+			print "Send ", flag
+			submit(flag)
+		else:
+			for f in flag:
+				print "Send ", f
+				submit(f)
 
 
 def parallelize(flag_getter, threads=5):
@@ -73,7 +78,7 @@ def parallelize(flag_getter, threads=5):
 
 
 def get_flag(ip, team_id=None):
-	pass #return flag from team_id with ip
+	pass #return flag from team_id with ip (possible to return a list of flags)
 
 
 parallelize(get_flag, threads=5)

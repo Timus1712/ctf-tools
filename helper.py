@@ -1,6 +1,7 @@
 import subprocess
 import telnetlib
 import os
+from multiprocessing import Pool, Queue, Manager, Process
 
 #submit server info
 HOST = "10.0.1.13"
@@ -17,15 +18,22 @@ def getIpList():
 	return l
 
 
-def chooseGoodIp(l):
-	a = []
-	for x in l:
-		response = subprocess.call(["ping", "-c 1", "-W 3", x], stdout=DEVNULL, stderr=subprocess.STDOUT)
-		if response == 0:
-			print x, "is ok"
-			yield x
-		else:
-			print x, "is not ok"
+def check_ip(ip):
+	return 1
+	response = subprocess.call(["ping", "-c 1", "-W 1", ip], stdout=DEVNULL, stderr=subprocess.STDOUT)
+	return response == 0
+
+
+def chooseGoodIp(ips):
+	cur = 0
+	while True:
+		ip = ips[cur]
+		team_id = cur + 1
+		if check_ip(ip):
+			yield (ip, team_id)
+		cur += 1
+		if cur == len(ips):
+			cur = 0
 
 
 def submit(flag):
@@ -34,14 +42,38 @@ def submit(flag):
 	print(tn.read_all())
 
 
-def get_flag(ip):
-	pass #get flag from team with ip
+def parallelize_wrapper(func, q, ip, team_id):
+	flag = func(ip, team_id)
+	q.put(flag)
 
 
-ips = getIpList()
-
-while True:
-	for ip in chooseGoodIp(ips): #just try to get flag from servers which respons in 3 seconds
-		flag = get_flag(ip)
+def parallelize_sender(q):
+	while True:
+		flag = q.get()
+		if flag == None:
+			break
+		print "Send ", flag
 		submit(flag)
-	time.sleep(5) #if needed
+
+
+def parallelize(flag_getter, threads=5):
+	try:
+		ips = getIpList()
+		m = Manager()
+		p = Pool(threads)
+		q = m.Queue()
+		submitter = Process(target=parallelize_sender, args=(q,))
+		submitter.start()
+		for ip, team_id in chooseGoodIp(ips):
+#			print "stealing flag from {1} with ip: {0}".format(ip, team_id)
+			p.apply_async(parallelize_wrapper, args=(flag_getter, q, ip, team_id,))
+	except KeyboardInterrupt:
+		p.terminate()
+		p.join()
+
+
+def get_flag(ip, team_id=None):
+	pass #return flag from team_id with ip
+
+
+parallelize(get_flag, threads=5)

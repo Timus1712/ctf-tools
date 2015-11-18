@@ -19,7 +19,6 @@ def getIpList():
 
 
 def check_ip(ip):
-	return 1
 	response = subprocess.call(["ping", "-c 1", "-W 1", ip], stdout=DEVNULL, stderr=subprocess.STDOUT)
 	return response == 0
 

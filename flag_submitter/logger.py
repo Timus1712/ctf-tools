@@ -7,7 +7,7 @@ class Logger:
     INFO = 2
     ERROR = 3
     LEVELS = ("", "DEBUG", "INFO ", "ERR")
-    
+
     def __init__(self, name="", logfilename=None, level=0):
         self.name = name
         self.level = level

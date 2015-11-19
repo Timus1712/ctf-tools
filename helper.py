@@ -4,8 +4,8 @@ import os
 from multiprocessing import Pool, Queue, Manager, Process
 
 #submit server info
-HOST = "10.0.1.13"
-PORT = 9000
+HOST = "127.0.0.1"
+PORT = 1992
 
 MAX_TEAM_NUMBER = 312
 
@@ -28,9 +28,15 @@ def check_ip(ip):
 
 
 def submit(flag):
-	tn = telnetlib.Telnet(HOST, PORT)
-	tn.write(bytes(str(flag) + "\n", 'utf-8'))
-	print(tn.read_all())
+	while True:
+		try:
+			tn = telnetlib.Telnet(HOST, PORT)
+			tn.write(bytes(str(flag) + "\n"))
+			print(tn.read_all())
+			break
+		except:
+			print "Error while connection to submitter"
+			continue
 
 
 def parallelize_wrapper(func, q, ip, team_id):
@@ -64,6 +70,7 @@ def parallelize(flag_getter, threads=5):
 #			print "stealing flag from {1} with ip: {0}".format(ip, team_id)
 			p.apply_async(parallelize_wrapper, args=(flag_getter, q, ip, team_id,))
 	except KeyboardInterrupt:
+		submitter.terminate()
 		p.terminate()
 		p.join()
 

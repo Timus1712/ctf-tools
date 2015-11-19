@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import socket, sys, time, sqlite3
+import socket, sys, time, sqlite3, re
 
 def LOG(msg):
     t = time.localtime()
@@ -18,7 +18,7 @@ def insert_flag(flag):
 #         LOG("Duplicate flag: %s" % flag)
         return False
     cursor.execute("INSERT INTO FLAGS VALUES(?, ?)",
-            (flag, int(time.time()))) 
+            (flag, int(time.time())))
     db_connection.commit()
     LOG("Added flag: %s" % flag)
     return True;
@@ -33,17 +33,20 @@ def create_socket():
             break;
         except:
             port += 1
-            
+
     sock.listen(1)
     return sock
 
+flag_re = re.compile("^\w{31}=$")
+
 def is_flag(s):
-    if len(s) != 33 or s[-1] != "=":
-        return False
-    for i in s[:-1]:
-        if i not in "abcdef1234567890":
-            return False
-    return True
+	return flag_re.match(s) != None
+#    if len(s) != 32 or s[-1] != "=":
+#        return False
+#    for i in s[:-1]:
+#        if i not in "abcdef1234567890":
+#            return False
+#    return True
 
 def handle_connection(connection):
     data = connection.recv(1024)

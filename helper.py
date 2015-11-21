@@ -3,11 +3,15 @@ import telnetlib
 import os
 from multiprocessing import Pool, Queue, Manager, Process
 
+#jury submit server
+#HOST = "10.10.10.3"
+#PORT = 80
+
 #submit server info
-HOST = "127.0.0.1"
+HOST = "10.60.156.3"
 PORT = 1992
 
-MAX_TEAM_NUMBER = 312
+MAX_TEAM_NUMBER = 324
 
 DEVNULL = open(os.devnull, 'wb')
 
@@ -15,11 +19,13 @@ DEVNULL = open(os.devnull, 'wb')
 def ips_generator():
 	i = 1
 	while True:
-		ip = "10." + str(60 + i / 255) + "." + str(i % 255) + ".3"
-		yield (ip, i)
+		ip = "team" + str(i) + ".e.ructf.org"
+#		ip = "10." + str(60 + i / 255) + "." + str(i % 255) + ".2"
+		if i != 156:
+			yield (ip, i)
 		i += 1
 		if i == MAX_TEAM_NUMBER + 1:
-			i = 1
+			break
 
 
 def check_ip(ip):
@@ -32,7 +38,7 @@ def submit(flag):
 		try:
 			tn = telnetlib.Telnet(HOST, PORT)
 			tn.write(bytes(str(flag) + "\n"))
-			print(tn.read_all())
+			print tn.read_all()
 			break
 		except:
 			print "Error while connection to submitter"
@@ -60,15 +66,18 @@ def parallelize_sender(q):
 
 
 def parallelize(flag_getter, threads=5):
+	ips = ips_generator()
 	try:
 		m = Manager()
 		p = Pool(threads)
 		q = m.Queue()
 		submitter = Process(target=parallelize_sender, args=(q,))
 		submitter.start()
-		for ip, team_id in ips_generator():
+		while True:
+			for ip, team_id in ips:
+#			for ip, team_id in ips_generator():
 #			print "stealing flag from {1} with ip: {0}".format(ip, team_id)
-			p.apply_async(parallelize_wrapper, args=(flag_getter, q, ip, team_id,))
+				p.apply_async(parallelize_wrapper, args=(flag_getter, q, ip, team_id,))
 	except KeyboardInterrupt:
 		submitter.terminate()
 		p.terminate()

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import zio, sys, sqlite3, time
+import zio, sys, sqlite3, time, random
 
 
 # Verdicts
@@ -13,12 +13,12 @@ SERVICE_DOWN = 6
 ERROR = 7
 
 VERDICT_MESSAGES = (
-    (ACCEPTED,      "Flag accepted"),
-    (NO_FLAG,       "No flag"),
+    (ACCEPTED,      "Accepted"),
+    (NO_FLAG,       "Denied: no such flag"),
     (YOUR_FLAG,     "This is your flag"),
-    (DUPLICATE,     "Flag already submitted"),
-    (EXPIRED,       "Flag expired"),
-    (SERVICE_DOWN,  "You cannot attack another team service if yours is down"),
+    (DUPLICATE,     "Denied: you already submitted this flag"),
+    (EXPIRED,       "Denied: flag is too old"),
+    (SERVICE_DOWN,  "Denied: your appropriate"),
     (ERROR,         ""),
 )
 
@@ -40,46 +40,62 @@ log = Logger("submitter")
 
 # Connections
 db_connection = sqlite3.connect("flags.db")
-HOST = "127.0.0.1"
-PORT = 9000
+HOSTS = ["10.10.10.3", "10.10.10.4", "10.10.10.5", "10.10.10.6"]
+#HOST = "10.10.10.5"
+PORT = 31337
 
 
 # Preparation
 # Create tables in db if not yet created
 
+def open_connection():
+    rHOSTS = random.shuffle(HOSTS)
+    for host in HOSTS:
+        try:
+            connection = zio.zio((host, PORT), print_read=False, print_write=False, timeout=180)
+            print connection.read_line() # jury greeting
+            print "Here"
+            print connection.read_line() # jury greeting
+#    print connection.read_line() # jury greeting
+            return connection
+        except:
+            continue
 
-def submit_flag(flag):
+def submit_flag(flag, connection):
     # flags are now submitted using one connection per flag
     # whilst testing systems allow submitting multiple flags
     # during one connection. TODO
     log.debug("Submitting flag %s", flag)
     try_number = 0
-    while True:
-        try_number += 1
-        try:
-            connection = zio.zio(
-                    (HOST, PORT), print_read=False, print_write=False)
-            break
-        except:
-            log.debug("Unsuccessful connection attempt")
-            if try_number % 10 == 0:
-                log.error("%d unsuccessful connections in a row", try_number)
-            time.sleep(0.3)
+#    while True:
+#        try_number += 1
+#        try:
+#            connection = zio.zio(
+#                    (HOST, PORT), print_read=False, print_write=False, timeout=20)
+#            break
+#        except:
+#            log.debug("Unsuccessful connection attempt")
+#            if try_number % 10 == 0:
+#                log.error("%d unsuccessful connections in a row", try_number)
+#            time.sleep(0.3)
 
-    connection.read_line() # jury greeting
+#    connection.read_line() # jury greeting
+#    connection.read_line() # jury greeting
     connection.write(flag + "\n")
-    response = connection.read().strip()
-    connection.close()
+    response = connection.read_line().strip()
+#    connection.close()
 
     log.debug("Response for %s: '%s'", flag, response)
 
     for verdict, message in VERDICT_MESSAGES:
         if message in response:
             return verdict
+    return ERROR
 
 def submit_all():
+    connection = open_connection()
     cursor = db_connection.cursor()
-    cursor.execute("SELECT * FROM FLAGS ORDER BY TIMESTAMP")
+    cursor.execute("SELECT * FROM FLAGS ORDER BY TIMESTAMP DESC")
     flags = cursor.fetchall()
     if len(flags) == 0:
         log.debug("submitted 0 flags")
@@ -91,7 +107,7 @@ def submit_all():
         verdicts_count[verdict] = 0
 
     for flag, timestamp in flags:
-        ret = submit_flag(flag)
+        ret = submit_flag(flag, connection)
 
         if ret == ERROR:
             log.error("Strange error for flag %s", flag)
@@ -113,6 +129,7 @@ def submit_all():
         status += VERDICT_SYMBOL[verdict]
         status += str(verdicts_count[verdict])
     log.info(status, len(flags))
+    connection.close()
 
 while True:
     submit_all()

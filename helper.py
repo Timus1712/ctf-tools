@@ -1,17 +1,21 @@
 import subprocess
 import telnetlib
+import time
 import os
-from multiprocessing import Pool, Queue, Manager, Process
+from multiprocessing import Pool, Manager, Process
 
-#jury submit server
-#HOST = "10.10.10.3"
-#PORT = 80
+# jury submit server
+# URY_HOST = "10.10.10.3"
+# PORT = 80
 
-#submit server info
+#our submit server info
 HOST = "10.60.156.3"
 PORT = 1992
 
+TEAM_HOST = "team{team_number}.e.ructf.org"
+
 MAX_TEAM_NUMBER = 324
+OUR_TEAM_NUMBER = 156
 
 DEVNULL = open(os.devnull, 'wb')
 
@@ -19,9 +23,9 @@ DEVNULL = open(os.devnull, 'wb')
 def ips_generator():
 	i = 1
 	while True:
-		ip = "team" + str(i) + ".e.ructf.org"
+		ip = TEAM_HOST.format(team_number=i)
 #		ip = "10." + str(60 + i / 255) + "." + str(i % 255) + ".2"
-		if i != 156:
+		if i != OUR_TEAM_NUMBER:
 			yield (ip, i)
 		i += 1
 		if i == MAX_TEAM_NUMBER + 1:
@@ -29,7 +33,8 @@ def ips_generator():
 
 
 def check_ip(ip):
-	response = subprocess.call(["ping", "-c 1", "-W 1", ip], stdout=DEVNULL, stderr=subprocess.STDOUT)
+	response = subprocess.call(["ping", "-c 1", "-W 1", ip],
+		stdout=DEVNULL, stderr=subprocess.STDOUT)
 	return response == 0
 
 
@@ -42,6 +47,7 @@ def submit(flag):
 			break
 		except:
 			print "Error while connection to submitter"
+			time.sleep(15)
 			continue
 
 
@@ -54,7 +60,7 @@ def parallelize_wrapper(func, q, ip, team_id):
 def parallelize_sender(q):
 	while True:
 		flag = q.get()
-		if flag == None:
+		if flag is None:
 			break
 		if type(flag) == str:
 			print "Send ", flag
@@ -75,8 +81,8 @@ def parallelize(flag_getter, threads=5):
 		submitter.start()
 		while True:
 			for ip, team_id in ips:
-#			for ip, team_id in ips_generator():
-#			print "stealing flag from {1} with ip: {0}".format(ip, team_id)
+				# for ip, team_id in ips_generator():
+				# print "stealing flag from {1} with ip: {0}".format(ip, team_id)
 				p.apply_async(parallelize_wrapper, args=(flag_getter, q, ip, team_id,))
 	except KeyboardInterrupt:
 		submitter.terminate()
@@ -85,7 +91,7 @@ def parallelize(flag_getter, threads=5):
 
 
 def get_flag(ip, team_id=None):
-	pass #return flag from team_id with ip (possible to return a list of flags)
+	pass # return flag from team_id with ip (possible to return a list of flags)
 
 
 parallelize(get_flag, threads=5)

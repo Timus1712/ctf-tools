@@ -1,3 +1,7 @@
+#!/usr/bin/python
+
+from __future__ import print_function
+
 import subprocess
 import telnetlib
 import time
@@ -14,7 +18,7 @@ PORT = 1992
 
 TEAM_HOST = "team{team_number}.e.ructf.org"
 
-MAX_TEAM_NUMBER = 324
+MAX_TEAM_NUMBER = 15
 OUR_TEAM_NUMBER = 156
 
 DEVNULL = open(os.devnull, 'wb')
@@ -43,18 +47,22 @@ def submit(flag):
 		try:
 			tn = telnetlib.Telnet(HOST, PORT)
 			tn.write(bytes(str(flag) + "\n"))
-			print tn.read_all()
+			print(tn.read_all())
 			break
 		except:
-			print "Error while connection to submitter"
+			print("Error while connection to submitter")
 			time.sleep(15)
 			continue
 
 
 def parallelize_wrapper(func, q, ip, team_id):
+	print("enter", ip, team_id)
 	if check_ip(ip):
+		print("stealing flag from {1} with ip: {0}".format(ip, team_id))
 		flag = func(ip, team_id)
 		q.put(flag)
+	else:
+		print("exit", ip, team_id)
 
 
 def parallelize_sender(q):
@@ -63,35 +71,35 @@ def parallelize_sender(q):
 		if flag is None:
 			break
 		if type(flag) == str:
-			print "Send ", flag
+			print("Send ", flag)
 			submit(flag)
 		else:
 			for f in flag:
-				print "Send ", f
+				print("Send ", f)
 				submit(f)
 
 
 def parallelize(flag_getter, threads=5):
-	ips = ips_generator()
 	try:
 		m = Manager()
-		p = Pool(threads)
+		p = Pool(processes=threads)
 		q = m.Queue()
 		submitter = Process(target=parallelize_sender, args=(q,))
 		submitter.start()
 		while True:
-			for ip, team_id in ips:
-				# for ip, team_id in ips_generator():
-				# print "stealing flag from {1} with ip: {0}".format(ip, team_id)
+			for ip, team_id in ips_generator():
 				p.apply_async(parallelize_wrapper, args=(flag_getter, q, ip, team_id,))
+			# lets wait some time before upload another
+			time.sleep(15)
 	except KeyboardInterrupt:
 		submitter.terminate()
 		p.terminate()
 		p.join()
 
-
+# None is bad return value
 def get_flag(ip, team_id=None):
-	pass # return flag from team_id with ip (possible to return a list of flags)
+	return "1" # return flag from team_id with ip (possible to return a list of flags)
+	pass
 
 
 parallelize(get_flag, threads=5)

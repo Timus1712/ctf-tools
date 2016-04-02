@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import sqlite3
 
 db_connection = sqlite3.connect("flags.db")

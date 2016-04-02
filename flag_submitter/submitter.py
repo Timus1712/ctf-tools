@@ -1,6 +1,10 @@
 #!/usr/bin/python
 
-import zio, sys, sqlite3, time, random
+import zio
+import sys
+import sqlite3
+import time
+import random
 
 
 # Verdicts
@@ -23,13 +27,13 @@ VERDICT_MESSAGES = (
 )
 
 VERDICT_SYMBOL = {
-    ACCEPTED : "+",
-    NO_FLAG : "-",
-    YOUR_FLAG : "M",
-    DUPLICATE : "D",
-    EXPIRED : "E",
-    SERVICE_DOWN : "W",
-    ERROR : "?",
+    ACCEPTED: "+",
+    NO_FLAG: "-",
+    YOUR_FLAG: "M",
+    DUPLICATE: "D",
+    EXPIRED: "E",
+    SERVICE_DOWN: "W",
+    ERROR: "?",
 }
 
 
@@ -49,14 +53,13 @@ PORT = 31337
 # Create tables in db if not yet created
 
 def open_connection():
-    rHOSTS = random.shuffle(HOSTS)
+    random.shuffle(HOSTS)
     for host in HOSTS:
         try:
             connection = zio.zio((host, PORT), print_read=False, print_write=False, timeout=180)
             print connection.read_line() # jury greeting
             print "Here"
             print connection.read_line() # jury greeting
-#    print connection.read_line() # jury greeting
             return connection
         except:
             continue
@@ -134,4 +137,3 @@ def submit_all():
 while True:
     submit_all()
     time.sleep(1)
-

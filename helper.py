@@ -13,13 +13,14 @@ from multiprocessing import Pool, Manager, Process
 # PORT = 80
 
 #our submit server info
-HOST = "10.60.156.3"
+HOST = "10.60.52.3"
 PORT = 1992
 
-TEAM_HOST = "10.23.{team_number}.3"
+#TEAM_HOST = "10.23.{team_number}.3"
+TEAM_HOST = "team{team_number}.ructfe.org"
 
-MAX_TEAM_NUMBER = 15
-OUR_TEAM_NUMBER = 156
+MAX_TEAM_NUMBER = 451
+OUR_TEAM_NUMBER = 24
 
 DEVNULL = open(os.devnull, 'wb')
 

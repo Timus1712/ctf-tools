@@ -19,7 +19,7 @@ ERROR = 7
 VERDICT_MESSAGES = (
     (ACCEPTED,      "Accepted"),
     (NO_FLAG,       "Denied: no such flag"),
-	(YOUR_FLAG,     "Denied: flag is your own"),
+    (YOUR_FLAG,     "Denied: flag is your own"),
     (DUPLICATE,     "Denied: you already submitted this flag"),
     (EXPIRED,       "Denied: flag is too old"),
     (SERVICE_DOWN,  "Denied: your appropriate"),
@@ -44,9 +44,9 @@ log = Logger("submitter")
 
 # Connections
 db_connection = sqlite3.connect("flags.db")
-HOSTS = ["f.ructf.org"]
+#HOSTS = ["f.ructf.org"]
 #HOSTS = ["10.10.10.3", "10.10.10.4", "10.10.10.5", "10.10.10.6"]
-#HOST = "10.10.10.5"
+HOST = "10.10.10.3"
 PORT = 31337
 
 

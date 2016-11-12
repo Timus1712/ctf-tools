@@ -16,7 +16,7 @@ from multiprocessing import Pool, Manager, Process
 HOST = "10.60.156.3"
 PORT = 1992
 
-TEAM_HOST = "team{team_number}.e.ructf.org"
+TEAM_HOST = "10.23.{team_number}.3"
 
 MAX_TEAM_NUMBER = 15
 OUR_TEAM_NUMBER = 156

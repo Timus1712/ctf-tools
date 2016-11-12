@@ -50,35 +50,44 @@ def create_socket():
 
 
 def is_flag(s):
-	return FLAG_RE.match(s) is not None
+    return FLAG_RE.match(s) is not None
 
 
 def handle_connection(connection):
     data = connection.recv(1024)
     # LOG("Recieved data: '%s'" % data.strip())
-    a = data.split()
-    if len(a) == 0 or not is_flag(a[0]):
-        return -1
-    return insert_flag(a[0])
-
-
-sock = create_socket()
-LOG("created socket")
-while True:
-    connection, address = sock.accept()
-    LOG("Connection from %s" % str(address))
-    try:
-        retv = handle_connection(connection)
-        if retv == 1:
-            connection.send("Good flag!\n")
-        elif retv == 0:
-            connection.send("This flag is already presented\n")
-        elif address[0] == "127.0.0.1":
-            connection.send("quitting...\n")
+    a = data.split("\n")
+    res = []
+    for x in a:
+        if is_flag(x):
+            res.append(insert_flag(x))
         else:
-            connection.send("Not a flag\n")
-    finally:
-        connection.close()
+            res.append(-1)
+    return res
+#    if len(a) == 0 or not is_flag(a[0]):
+#        return -1
+#    return insert_flag(a[0])
 
-sock.close()
-db_connection.close()
+
+try:
+    sock = create_socket()
+    LOG("created socket")
+    while True:
+        connection, address = sock.accept()
+        LOG("Connection from %s" % str(address))
+        try:
+            retv = handle_connection(connection)
+            for x in retv:
+                if x == 1:
+                    connection.send("Good flag!\n")
+                elif x == 0:
+                    connection.send("This flag is already presented\n")
+                elif address[0] == "127.0.0.1":
+                    connection.send("quitting...\n")
+                else:
+                    connection.send("Not a flag\n")
+        finally:
+            connection.close()
+finally:
+    sock.close()
+    db_connection.close()
